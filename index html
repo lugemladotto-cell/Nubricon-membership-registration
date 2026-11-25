@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NUBRICON Membership Registration</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f1f5f2;
+    margin: 0;
+    padding: 20px;
+}
+.container {
+    max-width: 650px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+}
+header {
+    background: #123b2a;
+    color: white;
+    text-align: center;
+    padding: 25px;
+    border-radius: 10px;
+}
+header h1 {
+    margin-bottom: 8px;
+}
+header p {
+    color: #e5c66d;
+}
+h3 {
+    color: #123b2a;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+    margin-top: 28px;
+}
+label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+}
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    margin-top: 7px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 15px;
+}
+button {
+    width: 100%;
+    padding: 15px;
+    background: #123b2a;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    font-size: 17px;
+    font-weight: bold;
+    margin-top: 25px;
+}
+#result {
+    display: none;
+    background: #e6f5e9;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 8px;
+    color: #174b2a;
+}
+#error {
+    display: none;
+    background: #ffe8e8;
+    padding: 15px;
+    margin-top: 20px;
+    color: #8b211a;
+}
+.whatsapp {
+    display: inline-block;
+    background: #16834a;
+    color: white;
+    padding: 12px;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-top: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>NUBRICON</h1>
+    <p>Bridging Communities. Empowering People. Transforming Lives.</p>
+    <h3 style="color:white;border:0">FOMU YA USAJILI WA WANACHAMA</h3>
+</header>
+
+<p>
+Jaza taarifa zako kwa usahihi ili kuwasilisha ombi la kujiunga na NUBRICON.
+</p>
+
+<form id="membershipForm">
+
+<h3>SEHEMU A: TAARIFA BINAFSI</h3>
+
+<label>1. Jina kamili *</label>
+<input name="full_name" required minlength="3" maxlength="120">
+
+<label>2. Jinsia *</label>
+<select name="gender" required>
+<option value="">Chagua</option>
+<option value="Me">Me</option>
+<option value="Ke">Ke</option>
+<option value="Nyingine">Nyingine</option>
+</select>
+
+<label>3. Nchi unayoishi kwa sasa *</label>
+<input name="country_of_residence" required>
+
+<label>4. Mkoa *</label>
+<input name="region" required>
+
+<h3>SEHEMU B: TAARIFA ZA MAWASILIANO</h3>
+
+<label>5. Namba ya simu *</label>
+<input name="phone_number" type="tel" required minlength="9">
+
+<label>6. Namba ya WhatsApp</label>
+<input name="whatsapp_number" type="tel">
+
+<label>7. Barua pepe / Email</label>
+<input name="email" type="email">
+
+<h3>SEHEMU C: TAARIFA MUHIMU</h3>
+
+<label>8. Unajishughulisha na nini kwa sasa? *</label>
+<textarea name="occupation" required></textarea>
+
+<label>9. Ungependa kujiunga na NUBRICON katika nafasi ipi? *</label>
+<select name="membership_category" required>
+<option value="">Chagua nafasi</option>
+<option value="Mwanachama wa kawaida">Mwanachama wa kawaida</option>
+<option value="Mjitoleaji (Volunteer)">Mjitoleaji (Volunteer)</option>
+<option value="Balozi wa NUBRICON">Balozi wa NUBRICON</option>
+<option value="Nyingine">Nyingine</option>
+</select>
+
+<button type="submit" id="submitBtn">
+🟢 JISAJILI SASA
+</button>
+
+</form>
+
+<div id="result"></div>
+<div id="error"></div>
+
+</div>
+
+<script>
+const SUPABASE_URL =
+"https://ggxlbrzrtdzwouksoxyb.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_JAoW_thmnq56ldabNqlczQ_Yvgw7H8D";
+
+const db = window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+const form = document.getElementById("membershipForm");
+
+form.addEventListener("submit", async function(e) {
+
+e.preventDefault();
+
+const btn = document.getElementById("submitBtn");
+const result = document.getElementById("result");
+const errorBox = document.getElementById("error");
+
+result.style.display = "none";
+errorBox.style.display = "none";
+
+btn.disabled = true;
+btn.textContent = "Inatuma taarifa...";
+
+const data = Object.fromEntries(
+new FormData(form).entries()
+);
+
+const random = crypto.getRandomValues(new Uint8Array(4));
+
+const code = Array.from(random, b =>
+b.toString(16).padStart(2, "0")
+).join("").toUpperCase();
+
+const membershipID = "NUB-TZ-" + code;
+
+const member = {
+full_name: data.full_name.trim(),
+gender: data.gender,
+country_of_residence: data.country_of_residence.trim(),
+region: data.region.trim(),
+phone_number: data.phone_number.trim(),
+whatsapp_number: data.whatsapp_number.trim() || null,
+email: data.email.trim() || null,
+occupation: data.occupation.trim(),
+membership_category: data.membership_category,
+membership_id: membershipID,
+application_status: "Imepokelewa"
+};
+
+try {
+
+const { error } = await db
+.from("nubricon_members")
+.insert([member]);
+
+if (error) throw error;
+
+form.reset();
+
+result.innerHTML = `
+<h3>Hongera! 🎉</h3>
+<p>Ombi lako limepokelewa kikamilifu.</p>
+<p>Namba yako ya utambulisho:</p>
+<strong>${membershipID}</strong>
+<p>Hali ya ombi: Imepokelewa</p>
+<a class="whatsapp"
+href="https://chat.whatsapp.com/BRNEe5xwxMDJDNNQaA58Dr?s=cl&p=a&iam=2"
+target="_blank" rel="noopener">
+Jiunge na WhatsApp Group ya NUBRICON
+</a>
+`;
+
+result.style.display = "block";
+
+} catch (err) {
+
+console.error(err);
+
+errorBox.textContent =
+"Samahani, usajili haujafanikiwa. Tafadhali jaribu tena.";
+
+errorBox.style.display = "block";
+
+} finally {
+
+btn.disabled = false;
+btn.textContent = "🟢 JISAJILI SASA";
+
+}
+
+});
+</script>
+
+</body>
+</html>

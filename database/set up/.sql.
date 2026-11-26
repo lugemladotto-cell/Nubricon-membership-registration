@@ -1,0 +1,53 @@
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS public.organizations (
+    id UUID PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO public.organizations (id, name, slug)
+VALUES (
+    '00000000-0000-4000-8000-000000000001',
+    'NUBRICON',
+    'nubricon'
+)
+ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE public.nubricon_members
+ADD COLUMN IF NOT EXISTS nationality TEXT,
+ADD COLUMN IF NOT EXISTS city TEXT,
+ADD COLUMN IF NOT EXISTS education_level TEXT,
+ADD COLUMN IF NOT EXISTS area_of_interest TEXT,
+ADD COLUMN IF NOT EXISTS reason_for_joining TEXT,
+ADD COLUMN IF NOT EXISTS consent_to_data_use BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS consent_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS organization_id UUID,
+ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS approved_by UUID REFERENCES auth.users(id);
+
+UPDATE public.nubricon_members
+SET organization_id = '00000000-0000-4000-8000-000000000001'
+WHERE organization_id IS NULL;
+
+ALTER TABLE public.nubricon_members
+ALTER COLUMN organization_id
+SET DEFAULT '00000000-0000-4000-8000-000000000001';
+
+ALTER TABLE public.nubricon_members
+ALTER COLUMN organization_id SET NOT NULL;
+
+CREATE TABLE IF NOT EXISTS public.organization_admins (
+    organization_id UUID REFERENCES public.organizations(id),
+    user_id UUID REFERENCES auth.users(id),
+    role TEXT NOT NULL CHECK (role IN ('owner','admin','viewer')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (organization_id,user_id)
+);
+
+ALTER TABLE public.nubricon_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.organization_admins ENABLE ROW LEVEL SECURITY;
+
+COMMIT;
